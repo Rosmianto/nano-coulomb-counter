@@ -19,6 +19,9 @@ double ah_quanta = 0.17067759; // mAh for each INT
 Adafruit_SSD1306 display(128, 64, &Wire, -1);
 Adafruit_INA219 ina219;
 
+unsigned long startTime = 0;
+int time_sign = 0;
+
 void myISR();
 
 void setup() {
@@ -56,6 +59,8 @@ void setup() {
   delay(100);
 
   digitalWrite(LTC_SHUTDOWN, HIGH);
+  Serial.println("Current,Time");
+  startTime = micros();
 }
 
 void loop() {
@@ -69,10 +74,18 @@ void loop() {
 
   display.clearDisplay();
   display.setCursor(0, 0);
-  display.print("INA219 I: ");
-  if (current_mA < 99.0) display.print('0');
-  if (current_mA < 9.0)  display.print('0');
-  display.println(String(current_mA) + " mA");
+  display.print("INA219 I:");
+  if (current_mA < 0.0)
+    display.print('-');
+  else
+    display.print(' ');
+  // if (abs(current_mA) < 1000.0) display.print(' ');
+  if (abs(current_mA) < 100.0) display.print('0');
+  if (abs(current_mA) < 10.0) display.print('0');
+  display.print(abs(current_mA), 2);
+  display.println(" mA");
+  
+  // display.println(String(current_mA) + " mA");
   display.print("INA219 V: ");
   display.println(String(busvoltage) + " V");
 
@@ -80,7 +93,11 @@ void loop() {
   display.print("Load: "); display.print(load_mAh); display.println(" mAh");
   display.println("Time: " + String(elapsedTime) + " s");
   display.display();
-  Serial.println(current_mA);
+  Serial.print(current_mA); Serial.print(','); Serial.println(time_sign);
+  if (micros() - startTime >= 1000000UL) {
+    time_sign = time_sign == 0 ? -2 : 0;
+    startTime = micros();
+  }
   delay(10);
 }
 
